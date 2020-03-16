@@ -1,0 +1,31 @@
+{
+  "name": "trivia-bot",
+  "version": "1.0.0",
+  "description": "Bot to win https://www.trivinet.com/es/trivial-online/version-web",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antoniogamiz/trivia-bot.git"
+  },
+  "keywords": [
+    "bot",
+    "trivia"
+  ],
+  "author": "@antoniogamiz",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/antoniogamiz/trivia-bot/issues"
+  },
+  "homepage": "https://github.com/antoniogamiz/trivia-bot#readme",
+  "dependencies": {
+    "chai": "^1.10.0",
+    "chai-as-promised": "^4.1.1",
+    "chromedriver": "^80.0.1",
+    "mocha": "^7.1.0",
+    "selenium-webdriver": "^3.6.0",
+    "sleep": "^6.1.0"
+  }
+}
