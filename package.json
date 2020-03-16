@@ -25,7 +25,6 @@
     "chai-as-promised": "^4.1.1",
     "chromedriver": "^80.0.1",
     "mocha": "^7.1.0",
-    "selenium-webdriver": "^3.6.0",
-    "sleep": "^6.1.0"
+    "selenium-webdriver": "^3.6.0"
   }
 }
