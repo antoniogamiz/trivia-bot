@@ -9,31 +9,28 @@ process.on("SIGINT", function() {
   STOP_EXECUTION = true;
 });
 
-class Question {
-  constructor(name) {
-    this.name = name;
-    this.correctAnswer = undefined;
-  }
-  getCorrectAnswer() {
-    return this.correctAnswer;
-  }
-}
-
 class QuestionManager {
   constructor() {
     this.questions = {};
   }
   addQuestion(question) {
-    this.questions[question.name] = question;
+    this.questions[question.name] = "";
   }
   questionAlreadyExists(question) {
     return this.questions[question.name] !== undefined;
   }
   getAnswer(question) {
-    return this.questions[question.name].getCorrectAnswer();
+    return this.questions[question];
   }
   markAnswerAsCorrect(question, name) {
-    this.questions[question.name].correctAnswer = name;
+    this.questions[question] = name;
+  }
+  readQuestionFile(path) {
+    let rawdata = fs.readFileSync(path);
+    this.questions = JSON.parse(rawdata);
+  }
+  writeQuestionFile(path) {
+    fs.writeFileSync(path, JSON.stringify(this.questions));
   }
 }
 
@@ -73,21 +70,17 @@ async function getCorrectAnswer(driver) {
     .then(e => e.getText());
 }
 
-(async function example() {
+async function play() {
   let driver = await new Builder().forBrowser("firefox").build();
   try {
     await driver.get("https://www.trivinet.com/es/trivial-online/jugar");
 
     const questionManager = new QuestionManager();
+    questionManager.readQuestionFile("questions.json");
 
     while (!STOP_EXECUTION) {
-      let name = await getQuestion(driver);
+      let question = await getQuestion(driver);
       let answers = await getAnswers(driver);
-      let question = new Question(name);
-
-      if (!questionManager.questionAlreadyExists(question)) {
-        questionManager.addQuestion(question);
-      }
 
       let answerToClick = questionManager.getAnswer(question);
       await clickAnswer(driver, answerToClick, answers);
@@ -97,10 +90,18 @@ async function getCorrectAnswer(driver) {
         question,
         await getCorrectAnswer(driver)
       );
-
-      sleep.msleep(4000);
+      questionManager.writeQuestionFile("questions.json");
+      sleep.msleep(3500);
     }
   } finally {
     await driver.quit();
+  }
+}
+
+(async function controller() {
+  while (!STOP_EXECUTION) {
+    try {
+      await play();
+    } catch {}
   }
 })();
