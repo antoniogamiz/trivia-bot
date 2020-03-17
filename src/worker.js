@@ -33,7 +33,11 @@ async function play() {
       await sleep(500);
 
       let correctAnswer = await getCorrectAnswer(page);
-      parentPort.postMessage({ question: question, answer: correctAnswer });
+      parentPort.postMessage({
+        type: "question",
+        question: question,
+        answer: correctAnswer
+      });
       await sleep(3500);
     }
   } finally {
@@ -47,6 +51,9 @@ async function play() {
       await play();
     } catch (e) {
       console.log(e);
+      parentPort.postMessage({
+        type: "reportFail"
+      });
     }
   }
 })();
