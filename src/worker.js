@@ -1,83 +1,47 @@
-const { Builder, By } = require("selenium-webdriver");
-
-const worker_threads = require("worker_threads");
-const parentPort = worker_threads.parentPort;
-
-const QuestionManager = require("./QuestionManager").QuestionManager;
+const { parentPort } = require("worker_threads");
+const puppeteer = require("puppeteer");
+const {
+  getQuestion,
+  getAnswers,
+  clickAnswer,
+  getCorrectAnswer
+} = require("./scraping");
 
 let STOP_EXECUTION = false;
+const URL = "https://www.trivinet.com/es/trivial-online/jugar";
 
 const sleep = milliseconds => {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 };
 
-process.on("SIGINT", function() {
-  console.log("Caught interrupt signal");
-  STOP_EXECUTION = true;
-});
-
-async function getQuestion(driver) {
-  return await driver
-    .findElement(By.css("h2"))
-    .then(element => element.getText());
-}
-
-async function getAnswers(driver) {
-  return await driver
-    .findElements(By.css(".col-lg-12"))
-    .then(element =>
-      Promise.all([
-        element[0].getText(),
-        element[1].getText(),
-        element[2].getText(),
-        element[3].getText()
-      ])
-    );
-}
-
-async function clickAnswer(driver, name, answersInAppearingOrder) {
-  let index = answersInAppearingOrder.findIndex(e => e === name);
-  return await driver
-    .findElement(
-      By.css(
-        `.row:nth-child(${index === -1 ? 1 : index + 1}) > .col-lg-12 > p > a`
-      )
-    )
-    .then(element => element.click());
-}
-
-async function getCorrectAnswer(driver) {
-  return await driver
-    .findElement(By.css(".btn.btn-success.btn-md.btn-block"))
-    .then(e => e.getText());
-}
+const QuestionManager = require("./QuestionManager").QuestionManager;
 
 async function play() {
-  let driver = await new Builder().forBrowser("firefox").build();
+  let questionManager = new QuestionManager();
+  questionManager.readQuestionFile("questions.json");
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(URL);
+
   try {
-    await driver.get("https://www.trivinet.com/es/trivial-online/jugar");
-
-    const questionManager = new QuestionManager();
-    questionManager.readQuestionFile("questions.json");
-
     while (!STOP_EXECUTION) {
-      let question = await getQuestion(driver);
-      let answers = await getAnswers(driver);
+      let question = await getQuestion(page);
+      let answers = await getAnswers(page);
       let answerToClick = questionManager.getAnswer(question);
 
-      await clickAnswer(driver, answerToClick, answers);
+      await clickAnswer(page, answerToClick, answers);
       await sleep(500);
 
-      let correctAnswer = await getCorrectAnswer(driver);
+      let correctAnswer = await getCorrectAnswer(page);
       parentPort.postMessage({ question: question, answer: correctAnswer });
       await sleep(3500);
     }
   } finally {
-    await driver.quit();
+    await browser.close();
   }
 }
 
-(async function controller() {
+(async function recoverFromErrors() {
   while (!STOP_EXECUTION) {
     try {
       await play();
@@ -86,3 +50,8 @@ async function play() {
     }
   }
 })();
+
+process.on("SIGINT", function() {
+  console.log("Exiting...");
+  STOP_EXECUTION = true;
+});

@@ -1,7 +1,4 @@
-const worker_threads = require("worker_threads");
-const Worker = worker_threads.Worker;
-const isMainThread = worker_threads.isMainThread;
-
+const { Worker, isMainThread } = require("worker_threads");
 const QuestionManager = require("./QuestionManager").QuestionManager;
 
 function newWorker(questionManager) {

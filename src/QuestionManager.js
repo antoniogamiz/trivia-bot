@@ -21,7 +21,7 @@ class QuestionManager {
     this.questions = JSON.parse(rawdata);
   }
   writeQuestionFile(path) {
-    fs.writeFileSync(path, JSON.stringify(this.questions));
+    fs.writeFileSync(path, JSON.stringify(this.questions, null, 4));
   }
 }
 
